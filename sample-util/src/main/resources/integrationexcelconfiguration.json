@@ -1,0 +1,89 @@
+{
+	"integrations":[
+	
+		{
+			"integrationname":"staah",
+			"filetype":"csv",
+			"delimiter" : "\t",
+			"header":
+			{
+				"startline":"1",
+				"headings":
+				{
+					"BOOKING_REFERENCE" : "RefId",
+					"BOOKING_NO":"ChannelRefID",
+					"ARRIVAL_DATE":"CheckInDate",
+					"DEPARTURE_DATE":"CheckOutDate",
+					"BOOKING_DATE": "CreateDate",
+					"CHANNEL_NAME": "MemberName",
+					"BOOKING_STATUS":"Status",
+					"CURRENCY":"Currency",
+					"AMOUNT_PAID":"AmountPaid",
+					"NO_EXTRA_ADULT":"NoExtraAdult",
+					"ADDRESS":"ADDRESS",
+					"ROOMS":"Rooms",
+					"ROOMTYPE":"RoomCatg"
+				}
+			},
+			"content":
+			{
+				"startline":"2",
+				"ignoreendlines": "1"
+			}
+		},
+		
+		{
+			"integrationname":"staahMax",
+			"filetype":"csv",
+			"delimiter" : "",
+			"header":
+			{
+				"startline":"1",
+				"headings":
+				{
+					"BOOKING_NO":"ChannelRefID",
+					"ARRIVAL_DATE":"CheckInDate",
+					"DEPARTURE_DATE":"CheckOutDate",
+					"BOOKING_DATE": "CreateDate",
+					"CHANNEL_NAME": "MemberName",
+					"BOOKING_STATUS":"Status",
+					"CURRENCY":"Currency",
+					"AMOUNT_PAID":"AmountPaid"
+					"WEB_BOOKING_NO":"WEB_BOOKING_NO"
+				}
+			},
+			"content":
+			{
+				"startline":"5",
+				"ignoreendlines":"2"
+			}
+		},
+		
+		{
+			"integrationname":"maximojo",
+			"filetype":"excel",
+			"delimiter" : "",
+			"header":
+			{
+				"startline":"1",
+				"headings":
+				{
+					"BOOKING_NO":"Booking No",
+					"ARRIVAL_DATE":"Arrival Date",
+					"DEPARTURE_DATE":"Departure Date",
+					"BOOKING_DATE": "Booked Date",
+					"CHANNEL_NAME": "Channel Name",
+					"BOOKING_STATUS":"Status",
+					"CURRENCY":"Currency",
+					"AMOUNT_PAID":"Total Amount",
+					"NET_AMOUNT":"Net Amount"
+				}
+			},
+			"content":
+			{
+				"startline":"2",
+				"ignoreendlines":"0"
+			}
+		}
+	]
+}

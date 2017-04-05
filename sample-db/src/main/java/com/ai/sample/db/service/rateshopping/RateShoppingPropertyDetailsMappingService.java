@@ -1,0 +1,22 @@
+package com.ai.sample.db.service.rateshopping;
+
+import java.util.List;
+import java.util.Map;
+
+import com.ai.sample.common.dto.PropertyDetailsDTO;
+import com.ai.sample.common.dto.rateshopping.RateShoppingPropertyDetailsDTO;
+import com.ai.sample.common.exception.ISellDBException;
+import com.ai.sample.db.model.property.configuration.PropertyDetails;
+
+public interface RateShoppingPropertyDetailsMappingService {
+	void saveOrUpdateRateShoppingPropertyDetailsMapping(RateShoppingPropertyDetailsDTO rateShoppingPropertyDetailsDTO) throws ISellDBException;
+	Map<String, RateShoppingPropertyDetailsDTO> getAllRateShoppingDetailsPerProperty(PropertyDetailsDTO propertyDetails) throws ISellDBException;
+	void saveOrUpdateRateShoppingPropertyDetailsMappingForProperty(PropertyDetailsDTO propertyDetails, RateShoppingPropertyDetailsDTO rateShoppingPropertyDetailsDTO) throws ISellDBException;
+	void saveOrUpdateRateShoppingPropertyDetailsMappingForProperty(PropertyDetails propertyDetails, RateShoppingPropertyDetailsDTO rateShoppingPropertyDetailsDTO) throws ISellDBException;
+
+	RateShoppingPropertyDetailsDTO findRateShoppingDetailsForPropertyByPropertyCode(String  rateShoppingPropertyUID, String propertyOtaID) throws ISellDBException;
+	
+	RateShoppingPropertyDetailsDTO findRateShoppingDetailsForPropertyByPropertyCode(PropertyDetailsDTO  propertyDetailsDTO, String rateShoppingOtaID) throws ISellDBException;
+	
+	List<RateShoppingPropertyDetailsDTO> findRateShoppingPropertyMappingForProperty(PropertyDetailsDTO propertyDetailsDto) throws ISellDBException;
+}

@@ -1,0 +1,131 @@
+package com.ai.sample.db.service;
+
+import java.sql.SQLException;
+import java.util.Date;
+
+import org.apache.log4j.Logger;
+import org.hibernate.JDBCException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.ai.sample.common.dto.PropertyDetailsDTO;
+import com.ai.sample.common.exception.ISellDBException;
+import com.ai.sample.db.dao.CityDao;
+import com.ai.sample.db.dao.CountryDao;
+import com.ai.sample.db.dao.CurrencyDao;
+import com.ai.sample.db.dao.HotelChainDetailsDao;
+import com.ai.sample.db.dao.PropertyDetailsDao;
+import com.ai.sample.db.dao.PropertyStatusDao;
+import com.ai.sample.db.dao.StateDao;
+import com.revnomix.isell.db.model.City;
+import com.revnomix.isell.db.model.Country;
+import com.revnomix.isell.db.model.Currency;
+import com.revnomix.isell.db.model.HotelChainDetails;
+import com.revnomix.isell.db.model.PropertyDetails;
+import com.revnomix.isell.db.model.PropertyStatus;
+import com.revnomix.isell.db.model.State;
+
+@Service("propertyDetailsService")
+@Transactional
+public class PropertyDetailsServiceImpl implements PropertyDetailsService {
+
+	Logger logger = Logger.getLogger(PropertyDetailsServiceImpl.class);
+
+	@Autowired
+	PropertyDetailsDao propertyDetailsDao;
+	
+	@Autowired
+	HotelChainDetailsDao hotelChainDetailsDao;
+	
+	@Autowired
+	CurrencyDao currencyDao;
+	
+	@Autowired
+	CountryDao countryDao;
+	
+	@Autowired
+	StateDao stateDao;
+
+	@Autowired 
+	CityDao cityDao;
+	
+	@Autowired
+	PropertyStatusDao propertyStatusDao;
+	
+	@Override
+	public void saveOrUpdatePropertyDetails(
+			PropertyDetailsDTO propertyDetailsDTO) throws JDBCException,
+			SQLException, ISellDBException {
+		
+		PropertyDetails propertyDetails = propertyDetailsDao.findPropertyDetails(propertyDetailsDTO.getName(), propertyDetailsDTO.getCity());
+		if( propertyDetails != null)
+		{
+			editPropertyDetails(propertyDetails, propertyDetailsDTO);
+			logger.info("Property data already exists in the database so updating the data" + propertyDetailsDTO.toString());
+		}
+		else
+		{
+			HotelChainDetails hotelChain = hotelChainDetailsDao.findHotelChainByName(propertyDetailsDTO.getHotelChainName());
+			String hashCode = propertyDetailsDTO.getName()+propertyDetailsDTO.getCity().hashCode();
+			
+			Currency currency = currencyDao.findCurrencyByName(propertyDetailsDTO.getHotelCurrency());
+			Country country = countryDao.findCountryByName(propertyDetailsDTO.getCountry());
+			State state = stateDao.findStateByName(propertyDetailsDTO.getState());
+			PropertyStatus propertyStatus = propertyStatusDao.findPropertyStatusByName(propertyDetailsDTO.getPropertyStatus());
+			City city = cityDao.findCityByName(propertyDetailsDTO.getCity());
+			
+			propertyDetails = new PropertyDetails( propertyDetailsDTO.getName(), 
+					hashCode, hotelChain, propertyDetailsDTO.getAddress(), 
+					country, state, city , propertyDetailsDTO.getPinCode(), 
+					propertyDetailsDTO.getCapcity(), propertyStatus, 
+					currency, new Date(), propertyDetailsDTO.getLongitude(), propertyDetailsDTO.getLatitude());
+		}
+		
+		
+	}
+
+	private void editPropertyDetails(PropertyDetails propertyDetails,
+			PropertyDetailsDTO propertyDetailsDTO)throws JDBCException,
+			SQLException, ISellDBException  {
+		// TODO Auto-generated method stub
+		
+	}
+
+	/*@Autowired
+	private RateShoppingRatesByDayDao dao;
+
+	@Autowired
+	private RateShoppingPropertyDetailsMappingDao rateShoppingPropertyDetailsMappingDao;
+
+	@Autowired
+	private RoomTypeDao roomTypeDao;
+	
+	@Override
+	public void saveRateShoppingRatesByDay(
+			RateShoppingRatesByDayDTO rateShoppingRatesByDayDTO)
+			throws JDBCException, SQLException, ISellDBException {
+
+		try
+		{
+			RateShoppingPropertyDetailsMapping rateShoppingPropertyDetails = rateShoppingPropertyDetailsMappingDao
+					.findRateShoppingPropertyDetails(rateShoppingRatesByDayDTO
+							.getHotelCode());
+	
+			
+			RoomType roomType = roomTypeDao.findRoomTypeByName(rateShoppingRatesByDayDTO.getRoomType());
+			RateShoppingRatesByDay rateShoppingRatesByDay = new RateShoppingRatesByDay(rateShoppingPropertyDetails, 
+					rateShoppingRatesByDayDTO.getNetRate(),	rateShoppingRatesByDayDTO.getOnSiteRate(), rateShoppingRatesByDayDTO.getCheckinDate(),
+					rateShoppingRatesByDayDTO.getCheckoutDate(), rateShoppingRatesByDayDTO.isPromotional(), rateShoppingRatesByDayDTO.getDiscount(),
+					rateShoppingRatesByDayDTO.getRoomType(), roomType, new Date());
+			logger.info("RateShoppingRatesByDay" + rateShoppingRatesByDay.toString());		
+			dao.saveRateShoppingRatesByDay(rateShoppingRatesByDay);
+		}
+		catch(Exception e)
+		{
+			logger.error("Exception in saveRateShoppingRatesByDay :" + e.getMessage());
+			throw new ISellDBException(-1 ,e.getMessage());
+		}
+	}*/
+
+}

@@ -1,0 +1,9 @@
+package com.ai.sample.db.service.extract;
+
+public class CreateOffLineExtract {
+	
+	String basePath;
+	String propertyName;
+
+//	generateExtract(businessDate)
+}

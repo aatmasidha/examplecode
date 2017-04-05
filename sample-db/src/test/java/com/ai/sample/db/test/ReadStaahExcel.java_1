@@ -1,0 +1,183 @@
+/**
+ * 
+ */
+package com.ai.sample.db.test;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+
+import com.ai.sample.common.constants.ColumnHeadingConstants;
+import com.ai.sample.common.dto.TransactionDetailsDTO;
+
+/**
+ * @author aparna
+ *
+ */
+
+
+public class ReadStaahExcel   extends BaseTestConfiguration {
+	
+
+	
+	Map<Integer, String> staahHeaderOrder = new HashMap<Integer, String>();
+	
+	List<InputExcelData> staahExcelData = new ArrayList<InputExcelData>();
+	
+//	public static void main(String[] args)
+
+	public ArrayList<TransactionDetailsDTO> test()
+    {
+        try
+        {
+        	ReadStaahExcel readStaahExcel = new ReadStaahExcel();
+        	return readStaahExcel.readExcelFile("D:/Documents/isell/requirementdocuments/Staah_Aurora_Tower/Staah_Data 09th Sep.xls");         
+        } 
+        catch (Exception e) 
+        {
+            e.printStackTrace();
+        }
+		return null;
+    }
+	
+	
+	public ArrayList<TransactionDetailsDTO> readExcelFile(String excelFilePath) throws Exception
+	{
+		try
+		{
+			FileInputStream file = new FileInputStream(new File(excelFilePath));
+			
+			 HSSFWorkbook wb = new HSSFWorkbook(file);
+	    
+	         Sheet sheet =wb.getSheetAt(0); 
+	         int numberOfRows = sheet.getPhysicalNumberOfRows();
+	         //Iterate through each rows one by one
+	         Iterator<Row> rowIterator = sheet.iterator();
+	         ArrayList<TransactionDetailsDTO> transactionalDetailsDTOList = new ArrayList<TransactionDetailsDTO>();
+	         int rowCnt = 1;
+	         while (rowIterator.hasNext() && rowCnt < numberOfRows) 
+	         { 
+	             Row row = rowIterator.next();
+	             //For each row, iterate through all the columns
+	             Iterator<Cell> cellIterator = row.cellIterator();
+	             if(rowCnt == 1 )
+	             {
+	            	 readHeaderStructure(cellIterator);
+	             }
+	             InputExcelData staahExcelData = new InputExcelData();
+	             if( rowCnt >  1)
+	             {
+		             while (cellIterator.hasNext()) 
+		             {
+		                 Cell cell = cellIterator.next();
+		                 
+		                 int columnNumber = cell.getColumnIndex(); 
+		                 String columnName = staahHeaderOrder.get(columnNumber);
+		                 
+		                 switch(columnName)
+		                 {
+		                 	
+		                 	case ColumnHeadingConstants.BOOKING_NO:
+		                 		String bookingID = "";
+		                 		switch (cell.getCellType()) 
+		                        {
+		                            case Cell.CELL_TYPE_STRING:
+		                            {
+		                            	bookingID = cell.getStringCellValue();
+		                            	break;
+		                            }
+		                            case Cell.CELL_TYPE_NUMERIC:
+		                            {	
+		                            	bookingID = (long)cell.getNumericCellValue() + "";
+		                            	break;
+		                            }
+		                 		}
+		                 		staahExcelData.setBookingID(bookingID);
+		                 		break;
+		                 	case ColumnHeadingConstants.ARRIVAL_DATE:
+		                 		Date arrivalDate = cell.getDateCellValue();
+		                 		staahExcelData.setArrivalDate(arrivalDate);
+		                 		break;
+		                 	case ColumnHeadingConstants.DEPARTURE_DATE:
+		                 		Date departureDate = cell.getDateCellValue();
+		                 		staahExcelData.setDepartureDate(departureDate);
+		                 		break;
+		                 	case ColumnHeadingConstants.BOOKING_DATE:
+		                 		Date creationDate = cell.getDateCellValue();
+		                 		staahExcelData.setCreationDate(creationDate);
+		                 		break;
+		                 	case ColumnHeadingConstants.CHANNEL_NAME:
+		                 		String channelMemberName = cell.getStringCellValue();
+		                 		String channelName = "";
+		                 		String[] channelMemberNameArray = channelMemberName.split("-");
+		                 		channelName = channelMemberNameArray[0];
+		                 		channelName = channelName.trim();
+		                 		staahExcelData.setChannelName(channelName);
+		                 		break;
+		                 	case ColumnHeadingConstants.BOOKING_STATUS:
+		                 		String bookingStatus = cell.getStringCellValue();
+		                 		staahExcelData.setBookingStatus(bookingStatus);
+		                 		break;
+		                 	case ColumnHeadingConstants.CURRENCY:
+		                 		String currency = cell.getStringCellValue();
+		                 		staahExcelData.setCurrency(currency);
+		                 		break;
+	//	                 		TODO we do not get number of guests for staah
+		                 /*	case Constants.STAAH_NUMBER_OF_GUESTS:
+		                 		double numGuests = cell.getNumericCellValue();
+		                 		staahExcelData.setNumGuests((int) numGuests);
+		                 		break;*/
+		                 	case ColumnHeadingConstants.AMOUNT_PAID:
+		                 		float totalAmount = (float)cell.getNumericCellValue();
+		                 		staahExcelData.setTotalAmount(totalAmount);
+		                 		break;
+		                 }
+		             }
+		             
+		             System.out.println(staahExcelData.toString());
+		             System.out.println("");
+		             
+		             TransactionDetailsDTO transaction = new TransactionDetailsDTO("Taj", staahExcelData.getBookingID(), 
+		            		 staahExcelData.getChannelName(), staahExcelData.getCreationDate(), staahExcelData.getArrivalDate(), 
+		            		 staahExcelData.getDepartureDate(), staahExcelData.getBookingStatus(), 
+		            		 staahExcelData.getCurrency(), staahExcelData.getTotalAmount(), staahExcelData.getNumGuests());
+		             transactionalDetailsDTOList.add(transaction);
+	             }
+	             rowCnt++;
+	             
+	         }
+	         wb.close();
+	         file.close();
+			return transactionalDetailsDTOList;
+		}
+		catch(Exception e)
+		{
+			System.out.println("Exception is:" + e.getStackTrace());
+			return null;
+		}
+	}
+
+	private void readHeaderStructure(Iterator<Cell> cellIterator) {
+		while (cellIterator.hasNext()) 
+        {
+            Cell cell = cellIterator.next();
+            //Check the cell type and format accordingly
+            switch (cell.getCellType()) 
+            {
+                case Cell.CELL_TYPE_STRING:
+                	staahHeaderOrder.put(cell.getColumnIndex(), cell.getStringCellValue());
+            }
+		
+        }
+	}
+}

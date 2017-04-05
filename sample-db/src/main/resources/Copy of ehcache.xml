@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<ehcache name="iSellcacheManager">
+	<diskStore path="java.io.tmpdir" />
+	<defaultCache maxElementsInMemory="1000" eternal="false"
+		timeToIdleSeconds="120" timeToLiveSeconds="120" overflowToDisk="true" />
+
+	<cache name="com.ai.sample.db.model.configuration.Currency" maxElementsInMemory="500" eternal="true"
+		timeToIdleSeconds="0" timeToLiveSeconds="0" overflowToDisk="false" />
+
+
+	<cache name="com.ai.sample.db.model.property.configuration.PropertyDetails" maxElementsInMemory="500" eternal="true"
+		timeToIdleSeconds="0" timeToLiveSeconds="0" overflowToDisk="false" />
+
+
+	<cache name="com.ai.sample.db.model.property.transaction.TransactionDetails" maxElementsInMemory="500"
+		eternal="true" timeToIdleSeconds="0" timeToLiveSeconds="0"
+		overflowToDisk="false" />
+
+	<cache name="com.ai.sample.db.model.configuration.City" maxElementsInMemory="500" eternal="true"
+		timeToIdleSeconds="0" timeToLiveSeconds="0" overflowToDisk="false" />
+	
+	<cache name="com.ai.sample.db.model.configuration.PropertyStatusMaster" maxElementsInMemory="500" eternal="true"
+		timeToIdleSeconds="0" timeToLiveSeconds="0" overflowToDisk="false" />
+</ehcache>

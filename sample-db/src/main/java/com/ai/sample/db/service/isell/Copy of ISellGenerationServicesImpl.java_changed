@@ -1,0 +1,422 @@
+package com.ai.sample.db.service.isell;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.lang.reflect.Type;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.apache.log4j.Logger;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.CreationHelper;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import com.ai.sample.common.dto.ChannelManagerISellDTO;
+import com.ai.sample.common.dto.OccupancyDetailsDTO;
+import com.ai.sample.common.dto.PropertyDetailsDTO;
+import com.ai.sample.common.dto.isell.ISellEventDetailsDTO;
+import com.ai.sample.common.dto.ota.OtaRevenueSummaryDetailsDTO;
+import com.ai.sample.common.dto.rateshopping.ISellRateShoppingRatesByDayDTO;
+import com.ai.sample.common.dto.rateshopping.RateShoppingISellDataDTO;
+import com.ai.sample.common.exception.ISellDBException;
+import com.ai.sample.common.exception.ISellProcessingException;
+import com.ai.sample.db.dao.isell.ISellRateShoppingRatesByDayDao;
+import com.ai.sample.db.dao.isell.OtaPerformanceSummaryDetailsByDayDao;
+import com.ai.sample.db.dao.property.configuration.PropertyDetailsDao;
+import com.ai.sample.db.dao.property.mapping.PropertyCompetitorMappingDao;
+import com.ai.sample.db.dao.property.mapping.PropertyEventMappingDao;
+import com.ai.sample.db.dao.property.transaction.ChannelManagerAvailabilityDetailsDao;
+import com.ai.sample.db.dao.property.transaction.PropertyOccupancyDetailsDao;
+import com.ai.sample.db.model.isell.RateShoppingRatesSummaryByDay;
+import com.ai.sample.db.model.property.configuration.PropertyDetails;
+import com.ai.sample.db.model.property.mapping.PropertyCompetitorMapping;
+import com.ai.sample.db.service.algo.CalculateRecommendedPrice;
+import com.ai.sample.db.service.python.CallRecommendationEngine;
+import com.ai.sample.db.type.MyJson;
+
+@Service("iSellGenerationServices")
+@Transactional
+public class ISellGenerationServicesImpl implements ISellGenerationServices {
+
+	Logger logger = Logger.getLogger(ISellGenerationServicesImpl.class);
+	
+	String[] headers = new String[] { "Date", "DOW", "Event Name","Event Type","Capacity","Rooms Avail To Sell","Rooms Avail Online"
+			,"OTA Sold", "Pick up from LR", "OTA Revenue", "ADR OTB", "Rate on CM"};
+	
+	@Autowired
+	PropertyDetailsDao propertyDetailsDao;
+
+	@Autowired
+	ISellOtaPerformanceDailyDetailsServices iSellOtaPerformanceDailyDetailsServices;
+
+	@Autowired
+	ISellRateShoppoingDailyDetailsServices iSellRateShoppoingDailyDetailsServices;
+
+	@Autowired
+	PropertyCompetitorMappingDao propertyCompetitorMappingDao;
+
+	@Autowired
+	ISellRateShoppingRatesByDayDao  iSellRateShoppingRatesByDayDao;
+	
+	@Autowired
+	PropertyEventMappingDao propertyEventMappingDao;
+	
+	@Autowired
+	PropertyOccupancyDetailsDao propertyOccupancyDetailsDao;
+	
+	@Autowired
+	OtaPerformanceSummaryDetailsByDayDao otaPerformanceSummaryDetailsByDayDao;
+	
+	@Autowired
+	ChannelManagerAvailabilityDetailsDao channelManagerAvailabilityDetailsDao;
+	
+	@Autowired
+	CalculateRecommendedPrice calculateRecommendedPrice;
+	
+	private PropertyDetails propertyDetails;
+	
+	Map<Integer, PropertyCompetitorMapping> propertyCompPriorityMap;
+	@Override
+	public void generateISellData(Date businessDate,
+			PropertyDetailsDTO propertyDetailsDto, int reportNumDays)
+			throws ISellProcessingException {
+		PropertyDetails propertyDetails = propertyDetailsDao
+				.findPropertyDetails(propertyDetailsDto);
+		
+		if( propertyDetails == null )
+		{
+			logger.error("ISellGenerationServicesImpl::generateISellData()  The property to generate the "
+					+ "extract is not configured in the database." + propertyDetailsDto.toString());
+			throw new ISellProcessingException(1, "ISellGenerationServicesImpl::generateISellData()  The property to generate the "
+					+ "extract is not configured in the database." + propertyDetailsDto.toString()); 
+		}
+		
+	
+		iSellOtaPerformanceDailyDetailsServices
+				.saveOrUpdateISellOtaPerformanceDailyDetailsData(businessDate,
+						propertyDetails);
+
+		List<PropertyCompetitorMapping> competitorList = propertyCompetitorMappingDao
+				.findCompetitorsForProperty(propertyDetails);
+
+		List<RateShoppingISellDataDTO> rateshoppingdata = iSellRateShoppoingDailyDetailsServices
+				.getRateShoppingDailyDetailsForProperty(businessDate,
+						propertyDetails,reportNumDays);
+
+		Map<PropertyDetails, List<RateShoppingISellDataDTO>> rateShoppingDetailsMap = new HashMap<PropertyDetails, List<RateShoppingISellDataDTO>>();
+
+		rateShoppingDetailsMap.put(propertyDetails, rateshoppingdata);
+		for (PropertyCompetitorMapping competitorDetails : competitorList) {
+			PropertyDetails comPropertyDetails = competitorDetails
+					.getCompetitorDetails();
+			rateshoppingdata = iSellRateShoppoingDailyDetailsServices
+					.getRateShoppingDailyDetailsForProperty(businessDate,
+							comPropertyDetails,reportNumDays);
+			rateShoppingDetailsMap.put(comPropertyDetails, rateshoppingdata);
+		}
+
+		Map<Date, MyJson> rateshoppingRatePerDayMap = new HashMap<Date, MyJson>();
+
+		Set<PropertyDetails> propertyDetailsSet = rateShoppingDetailsMap
+				.keySet();
+		for (PropertyDetails ratePropertyDetails : propertyDetailsSet) {
+
+			List<RateShoppingISellDataDTO> rateShoppingRatesList = rateShoppingDetailsMap
+					.get(ratePropertyDetails);
+			for (RateShoppingISellDataDTO rateShoppingISellDataDTO : rateShoppingRatesList) {
+				MyJson myJsonObject = rateshoppingRatePerDayMap
+						.get(rateShoppingISellDataDTO.getCheckinDate());
+				
+				ISellRateShoppingRatesByDayDTO iSellRateShoppingRatesByDayDTO = new ISellRateShoppingRatesByDayDTO(
+						ratePropertyDetails.getId(),
+						ratePropertyDetails.getName(),
+						rateShoppingISellDataDTO.getNetRate(),
+						rateShoppingISellDataDTO.isClosed());
+				
+				if (myJsonObject == null) {
+					myJsonObject = new MyJson();	
+					List<ISellRateShoppingRatesByDayDTO> iSellRateShoppingRatesByDayDTOList = new ArrayList<ISellRateShoppingRatesByDayDTO>();
+					
+					Gson gson = new Gson();
+					Type listType = new TypeToken<List<ISellRateShoppingRatesByDayDTO>>() {
+					}.getType();
+
+					iSellRateShoppingRatesByDayDTOList.add(iSellRateShoppingRatesByDayDTO);
+					String json = gson.toJson(iSellRateShoppingRatesByDayDTOList,
+							listType);
+					myJsonObject.setStringProp(json);
+
+				} else {
+					Type listType = new TypeToken<List<ISellRateShoppingRatesByDayDTO>>() {
+					}.getType(); 
+					Gson gson = new Gson();
+					List<ISellRateShoppingRatesByDayDTO> iSellRateShoppingRatesByDayDTOList = gson.fromJson(myJsonObject.getStringProp(), listType);
+					iSellRateShoppingRatesByDayDTOList.add(iSellRateShoppingRatesByDayDTO);
+					String json = gson.toJson(iSellRateShoppingRatesByDayDTOList,
+							listType);
+					myJsonObject.setStringProp(json);
+				}
+				rateshoppingRatePerDayMap
+						.put(rateShoppingISellDataDTO.getCheckinDate(),
+								myJsonObject);
+			}
+			System.out.println(ratePropertyDetails);
+		}
+		
+		Set<Date> dailyRatesByPropertySet = rateshoppingRatePerDayMap.keySet();
+		for (Date dailyRatesByProperty : dailyRatesByPropertySet) {
+			MyJson propertyCompRateDTO = rateshoppingRatePerDayMap.get(dailyRatesByProperty);
+			
+			RateShoppingRatesSummaryByDay iSellRateShoppingRatesByDay = iSellRateShoppingRatesByDayDao.findRateShoppingRateForPropertyAndDay(propertyDetails, dailyRatesByProperty);
+			if( iSellRateShoppingRatesByDay == null )
+			{
+				iSellRateShoppingRatesByDay =  new RateShoppingRatesSummaryByDay();
+				iSellRateShoppingRatesByDay.setBusinessDate(dailyRatesByProperty);
+				iSellRateShoppingRatesByDay.setPropertyDetails(propertyDetails);
+				iSellRateShoppingRatesByDay.setRateshoppingrates(propertyCompRateDTO);
+			}
+			else
+			{
+				iSellRateShoppingRatesByDay.setRateshoppingrates(propertyCompRateDTO);
+			}
+			iSellRateShoppingRatesByDayDao.saveOrUpdateRateShoppingRateForPropertyAndDay(iSellRateShoppingRatesByDay);
+		}
+
+	}
+
+	@Override
+	public void writeISellData(Date businessDate,
+			PropertyDetailsDTO propertyDetailsDto, String basePath, int reportNumDays)
+			throws ISellProcessingException {
+		try {
+		
+		    File fileFolder = new File(basePath);
+	         
+	         // create directories
+	         boolean  folderCreated = fileFolder.mkdirs();
+	         if( ! folderCreated && !fileFolder.exists())
+	         {
+	        	 logger.error("Unable to create folder so can not create the isell output for property: " + propertyDetailsDto.getName());
+	        	 throw new ISellProcessingException(1, "Unable to create folder so can not create the isell output for property: " + propertyDetailsDto.getName());
+	         }
+	    
+	     	Workbook workbook = new XSSFWorkbook();
+	     	
+	     	
+	     
+		    FileOutputStream fileOut;
+		    DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+		     // Using DateFormat format method we can create a string 
+		     // representation of a date with the defined format.
+		     String reportDate = df.format(businessDate);
+		    
+			fileOut = new FileOutputStream(basePath + File.separator + "isell_" + propertyDetailsDto.getName()+"_"+ reportDate + ".xlsx");
+			Sheet sheet = workbook.createSheet("iselldata");
+			
+			propertyDetails = propertyDetailsDao.findPropertyDetails(propertyDetailsDto);
+			
+			List<PropertyCompetitorMapping> propertyCompetitorMapping = propertyCompetitorMappingDao.findCompetitorsForProperty(propertyDetails);
+			propertyCompPriorityMap = new HashMap<Integer, PropertyCompetitorMapping>();
+			for(PropertyCompetitorMapping propCompMapping : propertyCompetitorMapping)
+			{
+				propertyCompPriorityMap.put(propCompMapping.getCompetitorSequence(), propCompMapping);
+			}
+			
+			int lastColumn = createISellHeader(sheet, workbook);
+			
+			createEventData(sheet, workbook, businessDate, reportNumDays);
+			
+			createOccupancyData(sheet, workbook, businessDate, reportNumDays);
+			
+			createOTAData(sheet, workbook, businessDate, reportNumDays);
+			
+			
+			createRateShoppingData(sheet, workbook, businessDate, reportNumDays);
+			
+			createChannelManagerAvilabilityData(sheet, workbook, businessDate, reportNumDays);
+			
+			float[] recommendedPrice = calculateRecommendedPrice.calculateRecommendedPriceForProperty(propertyDetailsDto, businessDate, reportNumDays);
+			int rowNum = 1;
+			for(int cnt = 0; cnt < recommendedPrice.length; cnt++)
+			{
+				int columnNum = lastColumn;
+				Row row = sheet.getRow(rowNum);
+				row.createCell(columnNum).setCellValue(recommendedPrice[cnt]);
+				rowNum++;
+			}
+			
+			CallRecommendationEngine callRecommendationEngine = new CallRecommendationEngine();
+			callRecommendationEngine.runRecommendationScripts();
+			workbook.write(fileOut);
+		    fileOut.close();
+			
+		} catch (FileNotFoundException e) {
+			logger.error("FileNotFoundException in ISellGenerationServicesImpl::writeISellData" + e.getMessage());
+		} catch (IOException e) {
+			logger.error("IOException in ISellGenerationServicesImpl::writeISellData" + e.getMessage());
+		} catch (ISellDBException e) {
+			logger.error("ISellDBException in ISellGenerationServicesImpl::writeISellData" + e.getMessage());
+		}
+	    
+	}
+
+	private void createChannelManagerAvilabilityData(Sheet sheet,
+			Workbook workbook, Date businessDate, int reportNumDays) throws ISellDBException {
+		try{
+			List<ChannelManagerISellDTO> channelManagerAvailabilityList =  channelManagerAvailabilityDetailsDao.findChannelManagerAvailabilityDetailsForISell(propertyDetails, businessDate, reportNumDays);
+			for(int cnt = 0; cnt < channelManagerAvailabilityList.size(); cnt++)
+			{
+				int columnNum = 5;
+				ChannelManagerISellDTO otaRevenueSummaryDetailsDTO = channelManagerAvailabilityList.get(cnt);
+				Row row = sheet.getRow(cnt+1);
+				row.createCell(columnNum).setCellValue(otaRevenueSummaryDetailsDTO.getRemainingCapacity());
+				columnNum = 11;
+				row.createCell(columnNum).setCellValue(otaRevenueSummaryDetailsDTO.getRatePlanValue());
+			}
+		}
+		catch(ISellDBException e)
+		{
+			throw e; 
+		}
+		
+	}
+
+	private void createRateShoppingData(Sheet sheet, Workbook workbook,
+			Date businessDate, int reportNumDays) throws ISellDBException {
+		
+		Map<Integer, Integer> propertyCompPriorityMapByPropertyID =  new HashMap<Integer, Integer>();
+		List<Integer> compIDList = new ArrayList<Integer>(propertyCompPriorityMap.keySet());
+		propertyCompPriorityMapByPropertyID.put(propertyDetails.getId(), 0 );
+		for(int compID : compIDList)
+		{
+			propertyCompPriorityMapByPropertyID.put(propertyCompPriorityMap.get(compID).getCompetitorDetails().getId(), compID);
+		}
+		
+		Map<Date, ArrayList<ISellRateShoppingRatesByDayDTO>>  iSellRateShoppingRatesByDayDTOmap = iSellRateShoppingRatesByDayDao.findRateShoppingRateForPropertyForConfigurableDays(propertyDetails, businessDate, reportNumDays);
+		
+		
+		List<Date> dateList = new ArrayList<Date>(iSellRateShoppingRatesByDayDTOmap.keySet());
+		int cnt = 0;
+		for(Date date : dateList)
+		{
+			Row row = sheet.getRow(cnt+1);
+			 int columnNum = 12;
+			 ArrayList<ISellRateShoppingRatesByDayDTO> iSellRateShoppingRatesListPerDay = iSellRateShoppingRatesByDayDTOmap.get(date);
+			 for( ISellRateShoppingRatesByDayDTO iSellRateShoppingRatesByDayDTO : iSellRateShoppingRatesListPerDay)
+			 {
+				 int columnNumber = columnNum + propertyCompPriorityMapByPropertyID.get(iSellRateShoppingRatesByDayDTO.getPropertyDetailsID());
+				 
+				 row.createCell(columnNumber).setCellValue(iSellRateShoppingRatesByDayDTO.getRate());
+			 }
+			 cnt++;
+		}
+	}
+
+	private void createOTAData(Sheet sheet, Workbook workbook,
+			Date businessDate, int reportNumDays) throws ISellDBException {
+		
+		
+		try{
+			List<OtaRevenueSummaryDetailsDTO> otaRevenueSummaryDetailsDTOList =  otaPerformanceSummaryDetailsByDayDao.findOtaPerformanceForISell(propertyDetails, businessDate, reportNumDays);
+			for(int cnt = 0; cnt < otaRevenueSummaryDetailsDTOList.size(); cnt++)
+			{
+				int columnNum = 9;
+				OtaRevenueSummaryDetailsDTO otaRevenueSummaryDetailsDTO = otaRevenueSummaryDetailsDTOList.get(cnt);
+				Row row = sheet.getRow(cnt+1);
+				row.createCell(columnNum).setCellValue(otaRevenueSummaryDetailsDTO.getOtaSoldCount());
+				columnNum++;
+				columnNum++;
+				row.createCell(columnNum).setCellValue(otaRevenueSummaryDetailsDTO.getOtaTotalRevenue());
+				columnNum++;
+				row.createCell(columnNum).setCellValue(otaRevenueSummaryDetailsDTO.getOtaADR());
+			}
+		}
+		catch(ISellDBException e)
+		{
+			throw e; 
+		}
+	}
+
+	private void createOccupancyData(Sheet sheet, Workbook workbook,
+			Date businessDate, int reportNumDays) throws ISellDBException {
+		List<OccupancyDetailsDTO> occupancyDetailsDTOList = propertyOccupancyDetailsDao.findOccupancyDetailsForISell(propertyDetails, businessDate, reportNumDays);
+		
+		for(int cnt = 0; cnt < occupancyDetailsDTOList.size(); cnt++)
+		{
+			int columnNum = 4;
+			OccupancyDetailsDTO occupancyDetailsDTO = occupancyDetailsDTOList.get(cnt);
+			Row row = sheet.getRow(cnt+1);
+			row.createCell(columnNum).setCellValue(occupancyDetailsDTO.getCapacity());
+			columnNum++;
+			row.createCell(columnNum).setCellValue(occupancyDetailsDTO.getOccupancy());
+			columnNum++;
+			row.createCell(columnNum).setCellValue(occupancyDetailsDTO.getVacantCount());
+
+		}
+	}
+
+	private void createEventData(Sheet sheet, Workbook workbook,
+			Date businessDate, int numReportDays) throws ISellDBException {
+
+		List<ISellEventDetailsDTO> propertyEventMappingList = propertyEventMappingDao.findEventsFromToDate(propertyDetails, businessDate, numReportDays);
+	
+		for(int cnt = 0; cnt < propertyEventMappingList.size(); cnt++)
+		{
+			int columnNum = 0;
+			Row row = sheet.createRow(cnt+1);
+			ISellEventDetailsDTO eventDetailsDto = propertyEventMappingList.get(cnt);
+			CreationHelper createHelper = workbook.getCreationHelper();
+			
+			CellStyle cellStyle = workbook.createCellStyle();
+			Cell cell = row.createCell(columnNum);
+		    cellStyle.setDataFormat(
+		    createHelper.createDataFormat().getFormat("yyyy-MM-dd"));
+		    
+		    cell.setCellValue(eventDetailsDto.getOccupancyDate());
+		    cell.setCellStyle(cellStyle);
+//			row.createCell(columnNum).setCellStyle(cellStyle);
+			columnNum++;
+			row.createCell(columnNum).setCellValue(eventDetailsDto.getDayOfWeek());
+			columnNum++;
+			row.createCell(columnNum).setCellValue(eventDetailsDto.getEventName());
+			columnNum++;
+			row.createCell(columnNum).setCellValue(eventDetailsDto.getEventType());
+		}
+	}
+
+	private int createISellHeader(Sheet sheet, Workbook workbook) {
+		Row row = sheet.createRow(0);
+		
+		for (int rn=0; rn<headers.length; rn++) {
+			   row.createCell(rn).setCellValue(headers[rn]);
+			}
+	
+		int startCompHeader = headers.length ;
+		row.createCell(startCompHeader).setCellValue(propertyCompPriorityMap.get(1).getPropertyDetails().getName());
+		startCompHeader++;	
+		for ( Integer key : propertyCompPriorityMap.keySet() ) {
+			row.createCell(startCompHeader).setCellValue(propertyCompPriorityMap.get(key).getCompetitorDetails().getName());
+			startCompHeader++;
+		}
+		row.createCell(startCompHeader).setCellValue("Recommended Price");
+		
+		return startCompHeader;
+	}
+}

@@ -1,0 +1,101 @@
+<?xml version="1.0"?>
+<project
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+	xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+	
+	<parent>
+		<groupId>com.ai</groupId>
+		<artifactId>sample</artifactId>
+		<version>0.0.1-SNAPSHOT</version>
+		<relativePath>../pom.xml</relativePath>
+	</parent>
+	
+	<artifactId>sample-dataservices</artifactId>
+	<modelVersion>4.0.0</modelVersion>
+
+	<name>Data Services</name>
+	<packaging>war</packaging>
+	<version>1.0.0</version>
+
+	<properties>
+		<springframework.version>4.0.6.RELEASE</springframework.version>
+		<jackson.library>2.7.5</jackson.library>
+		<joda-time.version>2.3</joda-time.version>
+	</properties>
+
+	<dependencies>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-core</artifactId>
+			<version>${springframework.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-web</artifactId>
+			<version>${springframework.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-webmvc</artifactId>
+			<version>${springframework.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>javax.servlet-api</artifactId>
+			<version>3.1.0</version>
+		</dependency>
+		<dependency>
+		    <groupId>com.fasterxml.jackson.core</groupId>
+		    <artifactId>jackson-databind</artifactId>
+		    <version>${jackson.library}</version>
+		</dependency>
+		<dependency>
+			<groupId>joda-time</groupId>
+			<artifactId>joda-time</artifactId>
+			<version>${joda-time.version}</version>
+		</dependency>
+		
+		<dependency>
+			<artifactId>sample-db</artifactId>
+			<groupId>com.ai</groupId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
+		
+		<dependency>
+			<artifactId>sample-common</artifactId>
+			<groupId>com.ai</groupId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
+		
+	</dependencies>
+
+	<build>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.2</version>
+                    <configuration>
+						<source>1.8</source>
+						<target>1.8</target>
+                    </configuration>
+                </plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-war-plugin</artifactId>
+					<version>2.6</version>
+					<configuration>
+						<warSourceDirectory>src/main/webapp</warSourceDirectory>
+						<warName>sample-dataservices</warName>
+						<failOnMissingWebXml>false</failOnMissingWebXml>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+
+		<finalName>sample-dataservices</finalName>
+	</build>
+</project>

@@ -1,0 +1,161 @@
+package com.ai.sample.db.model.pricing;
+
+import java.util.Date;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
+
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
+import com.ai.sample.db.model.algo.SeasonDetails;
+import com.ai.sample.db.model.configuration.RoomTypeMaster;
+import com.ai.sample.db.model.property.configuration.PropertyDetails;
+
+@Entity
+@Table(name="recommended_price_by_day",  uniqueConstraints=
+@UniqueConstraint(columnNames={"propertydetailsid", "checkindate"}))
+
+public class RecommendedPriceByDay {
+	private int id;
+	private PropertyDetails propertyDetails;
+	private Date checkindate;
+	private SeasonDetails seasonDetails;
+	private int weekNumber;
+	private float priceremainingCapacity;
+	private float priceARI;
+	private float priceMPI;
+	private float pricePQM;
+
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "id")
+	public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
+	}
+
+	@ManyToOne(fetch = FetchType.LAZY, cascade=CascadeType.ALL)
+	@JoinColumn(name = "propertydetailsid", nullable = false)
+	@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+	public PropertyDetails getPropertyDetails() {
+		return propertyDetails;
+	}
+
+	public void setPropertyDetails(PropertyDetails propertyDetails) {
+		this.propertyDetails = propertyDetails;
+	}
+
+	public Date getCheckindate() {
+		return checkindate;
+	}
+
+	public void setCheckindate(Date checkindate) {
+		this.checkindate = checkindate;
+	}
+
+	@ManyToOne(fetch = FetchType.LAZY, cascade=CascadeType.ALL)
+	@JoinColumn(name = "seasonid", nullable = false)
+	@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+	public SeasonDetails getSeasonDetails() {
+		return seasonDetails;
+	}
+
+	public void setSeasonDetails(SeasonDetails seasonDetails) {
+		this.seasonDetails = seasonDetails;
+	}
+
+	public int getWeekNumber() {
+		return weekNumber;
+	}
+
+	public void setWeekNumber(int weekNumber) {
+		this.weekNumber = weekNumber;
+	}
+
+	
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + id;
+		result = prime * result + ((checkindate == null) ? 0 : checkindate.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (!(obj instanceof RoomTypeMaster))
+			return false;
+		RecommendedPriceByDay other = (RecommendedPriceByDay) obj;
+		if (id != other.id)
+			return false;
+		if (checkindate == null) {
+			if (other.checkindate != null)
+				return false;
+		} else if (!checkindate.equals(other.checkindate))
+			return false;
+		return true;
+	}
+
+	public float getPriceremainingCapacity() {
+		return priceremainingCapacity;
+	}
+
+	public void setPriceremainingCapacity(float priceremainingCapacity) {
+		this.priceremainingCapacity = priceremainingCapacity;
+	}
+
+	public float getPriceARI() {
+		return priceARI;
+	}
+
+	public void setPriceARI(float priceARI) {
+		this.priceARI = priceARI;
+	}
+
+	public float getPriceMPI() {
+		return priceMPI;
+	}
+
+	public void setPriceMPI(float priceMPI) {
+		this.priceMPI = priceMPI;
+	}
+
+	public float getPricePQM() {
+		return pricePQM;
+	}
+
+	public void setPricePQM(float pricePQM) {
+		this.pricePQM = pricePQM;
+	}
+
+	@Override
+	public String toString() {
+		return "RecommendedPriceByDay [id=" + id + ", propertyDetails="
+				+ propertyDetails + ", checkindate=" + checkindate
+				+ ", seasonDetails=" + seasonDetails + ", weekNumber="
+				+ weekNumber + ", priceremainingCapacity="
+				+ priceremainingCapacity + ", priceARI=" + priceARI
+				+ ", priceMPI=" + priceMPI + ", pricePQM=" + pricePQM + "]";
+	}
+
+	
+}

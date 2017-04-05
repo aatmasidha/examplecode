@@ -1,0 +1,45 @@
+date,eventname,severity,eventtype,eventcategory,areaname
+2017-01-01,New Year,low,holiday,,
+2016-11-11,Auspicious Day,low,,,
+2017-01-18,SIAT Expo,medium,conference,citywide,Pune-Maharashtra-India
+2017-01-19,SIAT Expo,medium,conference,citywide,Pune-Maharashtra-India
+2017-01-20,SIAT Expo,medium,conference,citywide,Pune-Maharashtra-India
+2017-01-21,SIAT Expo,medium,conference,citywide,Pune-Maharashtra-India
+2017-01-26,Republic Day,medium,holiday,citywide,Pune-Maharashtra-India
+2017-01-27,Long Weekend,medium,holiday,citywide,Pune-Maharashtra-India
+2017-01-28,Long Weekend,medium,holiday,citywide,Pune-Maharashtra-India
+2017-01-29,Long Weekend,medium,holiday,citywide,Pune-Maharashtra-India
+2017-02-01,Vasat Panchami,medium,holiday,citywide,Pune-Maharashtra-India
+2017-02-03,International Conference on Emerging Trends & Innovation in ICT,medium,conference,citywide,Pune-Maharashtra-India
+2017-02-04,International Conference on Emerging Trends & Innovation in ICT,medium,conference,citywide,Pune-Maharashtra-India
+2017-02-05,International Conference on Emerging Trends & Innovation in ICT,medium,conference,citywide,Pune-Maharashtra-India
+2017-02-10,Guru Ravidas Jayanti,medium,holiday,citywide,Pune-Maharashtra-India
+2017-02-11,Long Weekend,medium,holiday,citywide,Pune-Maharashtra-India
+2017-02-12,Long Weekend,medium,holiday,citywide,Pune-Maharashtra-India
+2017-02-24,Maha Shivaratri - Shivaratri,medium,holiday,citywide,Pune-Maharashtra-India
+2017-02-25,GopherConIndia,medium,holiday,citywide,Pune-Maharashtra-India
+2017-03-01,GLASSPEX INDIA,medium,conference,citywide,Pune-Maharashtra-India
+2017-03-03,GLASSPEX INDIA,medium,conference,citywide,Pune-Maharashtra-India
+2017-03-04,GLASSPEX INDIA,medium,conference,citywide,Pune-Maharashtra-India
+2017-03-10,Long weekend,medium,holiday,citywide,Pune-Maharashtra-India
+2017-03-11,Long weekend,medium,holiday,citywide,Pune-Maharashtra-India
+2017-03-12,Holika Dahana,medium,holiday,citywide,Pune-Maharashtra-India
+2017-03-15,Shivaji Jayanti,medium,holiday,citywide,Pune-Maharashtra-India
+2017-03-17,Long weekend,medium,holiday,citywide,Pune-Maharashtra-India
+2017-03-18,Long weekend,medium,holiday,citywide,Pune-Maharashtra-India
+2017-03-19,Long weekend,medium,holiday,citywide,Pune-Maharashtra-India
+2017-03-20,Parsi New Year,medium,holiday,citywide,Pune-Maharashtra-India
+2017-04-06,Education Worldwide India-Pune,medium,conference,citywide,Pune-Maharashtra-India
+2017-04-09,Mahavir Jayanti,medium,holiday,citywide,Pune-Maharashtra-India
+2017-04-10,Hazarat Ali's Birthday,medium,holiday,citywide,Pune-Maharashtra-India
+2017-04-14,Good Friday,medium,holiday,citywide,Pune-Maharashtra-India
+2017-04-15,Holy Saturday,medium,holiday,citywide,Pune-Maharashtra-India
+2017-04-16,Easter,medium,holiday,citywide,Pune-Maharashtra-India
+2017-05-04,International Conference on Healthcare in Globalizing World,medium,conference,citywide,Pune-Maharashtra-India
+2017-05-05,International Conference on Healthcare in Globalizing World,medium,conference,citywide,Pune-Maharashtra-India
+2017-05-06,International Conference on Healthcare in Globalizing World,medium,conference,citywide,Pune-Maharashtra-India
+2017-06-09,The Sugar Summit Asia,medium,conference,citywide,Pune-Maharashtra-India
+2017-06-10,The Sugar Summit Asia,medium,conference,citywide,Pune-Maharashtra-India
+2017-07-01,Unique Gems and Jewellery International Show,medium,conference,citywide,Pune-Maharashtra-India
+2017-07-02,Unique Gems and Jewellery International Show,medium,conference,citywide,Pune-Maharashtra-India
+2017-07-03,Unique Gems and Jewellery International Show,medium,conference,citywide,Pune-Maharashtra-India

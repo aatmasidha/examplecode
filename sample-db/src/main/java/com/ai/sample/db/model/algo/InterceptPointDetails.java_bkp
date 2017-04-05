@@ -1,0 +1,156 @@
+package com.ai.sample.db.model.algo;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
+
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
+import com.ai.sample.db.model.property.configuration.PropertyDetails;
+
+@Entity
+@Table(name="intercept_point_details" ,  uniqueConstraints=
+@UniqueConstraint(columnNames={"property_details_id","season_details_id",}))
+public class InterceptPointDetails {
+	private int id;
+	private PropertyDetails propertyDetails;
+	private SeasonDetails seasonDetails;
+	private float all;
+	private float weenEnds;
+	private float weekDays;
+	private float monday;
+	private float tuestday;
+	private float wednesday;
+	private float thursday;
+	private float friday;
+	private float saturday;
+	
+	public InterceptPointDetails() {
+		super();
+	}
+
+	@Id
+	@Column(name = "id")
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
+	}
+
+	@ManyToOne(fetch = FetchType.LAZY, cascade=CascadeType.ALL)
+	@JoinColumn(name = "property_details_id", nullable = false)
+	@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+	public PropertyDetails getPropertyDetails() {
+		return propertyDetails;
+	}
+
+	public void setPropertyDetails(PropertyDetails propertyDetails) {
+		this.propertyDetails = propertyDetails;
+	}
+
+	@ManyToOne(fetch = FetchType.LAZY, cascade=CascadeType.ALL)
+	@JoinColumn(name = "season_details_id", nullable = false)
+	@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+	public SeasonDetails getSeasonDetails() {
+		return seasonDetails;
+	}
+
+	public void setSeasonDetails(SeasonDetails seasonDetails) {
+		this.seasonDetails = seasonDetails;
+	}
+
+	public float getAll() {
+		return all;
+	}
+
+	public void setAll(float all) {
+		this.all = all;
+	}
+
+	public float getWeenEnds() {
+		return weenEnds;
+	}
+
+	public void setWeenEnds(float weenEnds) {
+		this.weenEnds = weenEnds;
+	}
+
+	public float getWeekDays() {
+		return weekDays;
+	}
+
+	public void setWeekDays(float weekDays) {
+		this.weekDays = weekDays;
+	}
+
+	public float getMonday() {
+		return monday;
+	}
+
+	public void setMonday(float monday) {
+		this.monday = monday;
+	}
+
+	public float getTuestday() {
+		return tuestday;
+	}
+
+	public void setTuestday(float tuestday) {
+		this.tuestday = tuestday;
+	}
+
+	public float getWednesday() {
+		return wednesday;
+	}
+
+	public void setWednesday(float wednesday) {
+		this.wednesday = wednesday;
+	}
+
+	public float getThursday() {
+		return thursday;
+	}
+
+	public void setThursday(float thursday) {
+		this.thursday = thursday;
+	}
+
+	public float getFriday() {
+		return friday;
+	}
+
+	public void setFriday(float friday) {
+		this.friday = friday;
+	}
+
+	public float getSaturday() {
+		return saturday;
+	}
+
+	public void setSaturday(float saturday) {
+		this.saturday = saturday;
+	}
+
+	@Override
+	public String toString() {
+		return "InterceptPointDetails [id=" + id + ", propertyDetails="
+				+ propertyDetails + ", seasonDetails=" + seasonDetails
+				+ ", all=" + all + ", weenEnds=" + weenEnds + ", weekDays="
+				+ weekDays + ", monday=" + monday + ", tuestday=" + tuestday
+				+ ", Wednesday=" + wednesday + ", thursday=" + thursday
+				+ ", friday=" + friday + ", saturday=" + saturday + "]";
+	}
+
+}
